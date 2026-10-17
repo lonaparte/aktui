@@ -50,11 +50,23 @@ aktui media-off    # Disable media transfer (default)
 
 When disabled, aktui does not upload, download, or delete media files. Existing files and note references are preserved; phone sync is unaffected. When enabled, Anki merges media changes, including deletions. The terminal shows media placeholders without playback.
 
+## Collection backup versions
+
+Sync checks the collection before and after synchronization, saving a new
+`.colpkg` only when its logical content changes. The three most recent distinct
+versions are retained locally. Notes, cards, review history, decks, note types,
+templates, and collection preferences contribute to the comparison. Sync counters,
+timestamps, selected decks, daily counters, and SQLite file layout do not.
+Reverting to an older content version makes it the newest version without keeping
+two copies of the same content. Existing packages are inspected and deduplicated
+on first use. A new package must finish successfully before older versions can be
+removed. Packages exclude media and login credentials.
+
 ## Implementation
 
 - Official Anki collection, scheduler, and sync; a single-process curses interface.
 - One account per profile, an exclusive profile lock, and token storage with `0600` permissions. Passwords are not saved; tokens are not encrypted.
-- Official collection backups, at most three retained. Full replacement stops if backup fails. Backups exclude media.
+- Anki collection packages, retaining the three most recent distinct content versions. Full replacement stops if backup fails. Backups exclude media.
 
 For development, install with `python -m pip install --no-deps -e .`, then run `python -m unittest discover -s tests -v`. Code lives in `src/aktui/`. Local sync-server tests pass; live account testing has not been completed.
 

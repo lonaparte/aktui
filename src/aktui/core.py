@@ -8,6 +8,7 @@ from anki.collection import Collection
 from anki.errors import SyncError, SyncErrorKind
 from anki.sync_pb2 import SyncAuth, SyncCollectionResponse as SyncResult
 
+from .backups import create_backup
 from .storage import Profile
 
 
@@ -38,20 +39,13 @@ class Service:
         return SyncAuth(hkey=account["hkey"], endpoint=account.get("endpoint") or None,
                         io_timeout_secs=60)
 
-    def backup(self, *, force: bool = True):
-        folder = self.profile.path / "backups"
-        folder.mkdir(mode=0o700, exist_ok=True)
-        self.col.create_backup(backup_folder=str(folder), force=force, wait_for_completion=True)
-        # Keep the three newest collection-only backups.
-        files = sorted(folder.glob("*.colpkg"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for path in files[3:]:
-            path.unlink()
+    def backup(self):
+        return create_backup(self.col, self.profile.path / "backups")
 
     def sync(self):
         self.pending = None
         auth = self.auth()  # avoid backup work when not logged in
-        # Respect Anki's backup interval for ordinary sync; full sync forces it.
-        self.backup(force=False)
+        self.backup()
         try:
             out = self.col.sync_collection(auth, sync_media=False)
             if out.new_endpoint:
@@ -64,6 +58,7 @@ class Service:
             if out.required != SyncResult.NO_CHANGES:
                 raise RuntimeError(f"Unexpected sync result: {out.required}; retry sync")
             self.col._load_scheduler()  # also done by upstream aqt.sync
+            self.backup()
             self.sync_media()
             return out
         except SyncError as exc:
@@ -95,6 +90,7 @@ class Service:
         finally:
             self.col.reopen(after_full_sync=True)
             self.pending = None
+        self.backup()
         self.sync_media()
 
     def sync_media(self):

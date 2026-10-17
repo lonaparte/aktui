@@ -82,6 +82,10 @@ class SyncIntegration(unittest.TestCase):
             a.sync()
             self.assertEqual(a.col.get_note(n.id)['Back'], 'updated')
             self.assertEqual(a.col.db.scalar('select count(*) from revlog'), 1)
+            # Repeated no-change syncs must not consume backup versions.
+            before = set((a.profile.path / 'backups').glob('*.colpkg'))
+            a.sync()
+            self.assertEqual(set((a.profile.path / 'backups').glob('*.colpkg')), before)
             # A transport failure must retain a usable local collection.
             a.pending = type('Pending', (), {'required': 2})()
             with patch.object(a.col, 'full_upload_or_download', side_effect=OSError('offline')):
