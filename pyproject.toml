@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aktui"
+version = "0.1.0"
+description = "A Python terminal interface for Anki"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "UPSTREAM-LICENSE-NOTICE"]
+# Supported lower and upper bound: 25.9.
+dependencies = ["anki==25.9"]
+
+[project.scripts]
+aktui = "aktui.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["aktui", "aktui.*"]
+namespaces = false

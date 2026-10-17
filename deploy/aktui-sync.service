@@ -1,0 +1,11 @@
+[Unit]
+Description=Synchronize aktui collection
+
+[Service]
+Type=oneshot
+ExecStart=%h/aktui/.venv/bin/aktui --profile default sync
+UMask=0077
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+TimeoutStartSec=infinity

@@ -1,0 +1,10 @@
+[Unit]
+Description=Attempt aktui sync every 30 minutes
+
+[Timer]
+OnStartupSec=5min
+OnUnitInactiveSec=30min
+Unit=aktui-sync.service
+
+[Install]
+WantedBy=timers.target
