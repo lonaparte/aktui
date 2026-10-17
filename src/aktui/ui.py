@@ -47,10 +47,10 @@ class UI:
             key = self.win.getch()
             if key in (ord('q'), 27):
                 return None
-            if key in (curses.KEY_UP, ord('k')):
-                index = max(0, index - 1)
-            if key in (curses.KEY_DOWN, ord('j')):
-                index = min(len(labels) - 1, index + 1)
+            if key in (curses.KEY_UP, ord('k')) and labels:
+                index = (index - 1) % len(labels)
+            if key in (curses.KEY_DOWN, ord('j')) and labels:
+                index = (index + 1) % len(labels)
             if key in (10, 13) and labels:
                 return index
 
@@ -128,7 +128,7 @@ class UI:
         username = self.prompt("AnkiWeb email (new account: https://ankiweb.net/account/register)")
         if username is None:
             return
-        password = self.prompt("AnkiWeb password (not saved)", secret=True)
+        password = self.prompt("AnkiWeb password", secret=True)
         if password is None:
             return
         try:
