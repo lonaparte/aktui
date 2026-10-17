@@ -4,9 +4,7 @@ A lightweight Anki TUI client built on the official [Anki](https://github.com/an
 
 ## Install
 
-Requires Linux, Python 3.11+, curses, and a terminal editor. Tested on Linux x86_64 with Python 3.12; use Debian 12 / Ubuntu 24.04 or newer.
-
-Anki is pinned to `anki==25.9`: both the supported minimum and maximum are **25.9**.
+Requires Python 3.11+. Anki package version is pinned to `anki==25.9`.
 
 ```bash
 cd aktui
