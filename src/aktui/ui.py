@@ -11,6 +11,7 @@ import tempfile
 import textwrap
 
 from .render import plain, safe_text
+from .multiselect import parse_multiselect
 from anki.sync_pb2 import SyncCollectionResponse as SyncResult
 
 
@@ -207,6 +208,42 @@ class UI:
                 if value is not None:
                     query, cursors = value, [0]
 
+    def multiselect(self, form):
+        selected = set()
+        focus = 0
+        message = ""
+        while True:
+            lines = [form.prompt, ""]
+            for index, choice in enumerate(form.choices):
+                lines.append(("> " if focus == index else "  ") +
+                             ("[x] " if choice.value in selected else "[ ] ") + choice.label)
+            lines.append(("> " if focus == len(form.choices) else "  ") + "[" + form.submit_label + "]")
+            if message:
+                lines += ["", message]
+            height = max(1, self.win.getmaxyx()[0] - 4)
+            self.draw(self.s.col.decks.name(self.did), lines,
+                      "Up/Down move | Space/Enter select or submit | 1-9 toggle | q back",
+                      offset=max(0, focus + 3 - height))
+            key = self.win.getch()
+            if key in (ord('q'), 27):
+                return None
+            if key in (curses.KEY_UP, ord('k')):
+                focus = (focus - 1) % (len(form.choices) + 1)
+            elif key in (curses.KEY_DOWN, ord('j'), 9):
+                focus = (focus + 1) % (len(form.choices) + 1)
+            elif ord('1') <= key <= ord('9') and key - ord('1') < len(form.choices):
+                focus = key - ord('1')
+                form.toggle(selected, focus)
+                message = ""
+            elif key in (32, 10, 13):
+                if focus < len(form.choices):
+                    form.toggle(selected, focus)
+                    message = ""
+                elif selected:
+                    return selected
+                else:
+                    message = "Choose at least one option before submitting."
+
     def study(self):
         self.s.select_deck(self.did)
         while True:
@@ -215,12 +252,19 @@ class UI:
                 self.notice("No cards currently due. Return later for learning cards, or check daily limits in Anki.")
                 return
             card, states = item
-            shown = False
+            form = parse_multiselect(card.question())
+            feedback = []
+            if form:
+                selected = self.multiselect(form)
+                if selected is None:
+                    return
+                feedback = form.feedback(selected) + [""]
+            shown = form is not None
             offset = 0
             while True:
                 html = card.answer() if shown else card.question()
                 width = max(10, self.win.getmaxyx()[1] - 2)
-                lines = []
+                lines = list(feedback)
                 for part in plain(html).splitlines():
                     lines.extend(textwrap.wrap(part, width) or [''])
                 footer = "Space reveal | Up/Down scroll | e edit | q back"
